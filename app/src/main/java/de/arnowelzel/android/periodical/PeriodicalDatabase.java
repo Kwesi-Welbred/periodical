@@ -44,6 +44,7 @@ import static java.lang.String.*;
  */
 @SuppressLint("DefaultLocale")
 class PeriodicalDatabase {
+    public final String DEFAULT_LANGUAGE = "";
     public final Integer DEFAULT_PERIOD_LENGTH = 4;
     public final Integer DEFAULT_LUTEAL_LENGTH = 14;
     public final Integer DEFAULT_CYCLE_LENGTH = 183;

@@ -20,6 +20,7 @@ package de.arnowelzel.android.periodical;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -29,11 +30,20 @@ import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.zeugmasolutions.localehelper.LocaleHelperActivityDelegateImpl;
+import com.zeugmasolutions.localehelper.LocaleHelperApplicationDelegate;
+
+import java.util.Locale;
+
 /**
  * Activity to handle the "Preferences" command
  */
 public class PreferenceActivity extends AppCompatPreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+    /* Main database */
     private PeriodicalDatabase dbMain;
+
+    /* Delegate for language override */
+    LocaleHelperActivityDelegateImpl localeDelegate = new LocaleHelperActivityDelegateImpl();
 
     /**
      * Called when activity starts
@@ -41,7 +51,11 @@ public class PreferenceActivity extends AppCompatPreferenceActivity implements S
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+        localeDelegate.onCreate(this);
+
+        // Set title to make sure, we have the localized version
+        setTitle(R.string.options_title);
+
         final Context context = getApplicationContext();
         assert context != null;
 
@@ -136,6 +150,7 @@ public class PreferenceActivity extends AppCompatPreferenceActivity implements S
     @SuppressWarnings("deprecation")
     protected void onResume() {
         super.onResume();
+        localeDelegate.onResumed(this);
         
         // Set up a listener whenever a key changes
         getPreferenceScreen().getSharedPreferences()
@@ -149,6 +164,7 @@ public class PreferenceActivity extends AppCompatPreferenceActivity implements S
     @SuppressWarnings("deprecation")
     protected void onPause() {
         super.onPause();
+        localeDelegate.onPaused();
         
         // Unregister the listener whenever a key changes
         getPreferenceScreen().getSharedPreferences()
@@ -167,6 +183,17 @@ public class PreferenceActivity extends AppCompatPreferenceActivity implements S
 
         // Store setting to database
         switch(key) {
+            case "language":
+                String language = preferenceUtils.getString(key, dbMain.DEFAULT_LANGUAGE);
+                dbMain.setOption(key, language);
+                Locale locale;
+                if(language.equals("")) {
+                    locale = Resources.getSystem().getConfiguration().locale;
+                } else {
+                    locale = new Locale(language);
+                }
+                localeDelegate.setLocale(this, locale);
+                break;
             case "period_length":
                 dbMain.setOption(key, preferenceUtils.getInt(key, dbMain.DEFAULT_PERIOD_LENGTH));
                 break;
@@ -234,5 +261,13 @@ public class PreferenceActivity extends AppCompatPreferenceActivity implements S
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    /**
+     * Override to set custom locale
+     */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(localeDelegate.attachBaseContext(newBase));
     }
 }

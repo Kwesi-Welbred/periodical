@@ -20,6 +20,7 @@ package de.arnowelzel.android.periodical;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.backup.BackupManager;
@@ -28,6 +29,9 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -38,6 +42,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MenuItem;
@@ -47,9 +52,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
+import com.zeugmasolutions.localehelper.LocaleHelperActivityDelegateImpl;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 import static de.arnowelzel.android.periodical.PeriodicalDatabase.DayEntry.PERIOD_CONFIRMED;
 import static de.arnowelzel.android.periodical.PeriodicalDatabase.DayEntry.PERIOD_START;
@@ -59,7 +67,7 @@ import static de.arnowelzel.android.periodical.PeriodicalDatabase.DayEntry.PERIO
  */
 public class MainActivityApp extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    private final int[] calButtonIds = { R.id.cal01, R.id.cal02, R.id.cal03,
+    private final int[] calButtonIds = {R.id.cal01, R.id.cal02, R.id.cal03,
             R.id.cal04, R.id.cal05, R.id.cal06, R.id.cal07, R.id.cal08,
             R.id.cal09, R.id.cal10, R.id.cal11, R.id.cal12, R.id.cal13,
             R.id.cal14, R.id.cal15, R.id.cal16, R.id.cal17, R.id.cal18,
@@ -67,8 +75,8 @@ public class MainActivityApp extends AppCompatActivity
             R.id.cal24, R.id.cal25, R.id.cal26, R.id.cal27, R.id.cal28,
             R.id.cal29, R.id.cal30, R.id.cal31, R.id.cal32, R.id.cal33,
             R.id.cal34, R.id.cal35, R.id.cal36, R.id.cal37, R.id.cal38,
-            R.id.cal39, R.id.cal40, R.id.cal41, R.id.cal42 };
-    private final int[] calButtonIds_2 = { R.id.cal01_2, R.id.cal02_2, R.id.cal03_2,
+            R.id.cal39, R.id.cal40, R.id.cal41, R.id.cal42};
+    private final int[] calButtonIds_2 = {R.id.cal01_2, R.id.cal02_2, R.id.cal03_2,
             R.id.cal04_2, R.id.cal05_2, R.id.cal06_2, R.id.cal07_2,
             R.id.cal08_2, R.id.cal09_2, R.id.cal10_2, R.id.cal11_2,
             R.id.cal12_2, R.id.cal13_2, R.id.cal14_2, R.id.cal15_2,
@@ -78,7 +86,7 @@ public class MainActivityApp extends AppCompatActivity
             R.id.cal28_2, R.id.cal29_2, R.id.cal30_2, R.id.cal31_2,
             R.id.cal32_2, R.id.cal33_2, R.id.cal34_2, R.id.cal35_2,
             R.id.cal36_2, R.id.cal37_2, R.id.cal38_2, R.id.cal39_2,
-            R.id.cal40_2, R.id.cal41_2, R.id.cal42_2 };
+            R.id.cal40_2, R.id.cal41_2, R.id.cal42_2};
 
     private final String STATE_MONTH = "month";
     private final String STATE_YEAR = "year";
@@ -107,6 +115,9 @@ public class MainActivityApp extends AppCompatActivity
     /* Status of the main navigartion drawer */
     private boolean navigationDrawerActive = false;
 
+    /* Delegate for language override */
+    LocaleHelperActivityDelegateImpl localeDelegate = new LocaleHelperActivityDelegateImpl();
+
     /**
      * Called when activity starts
      */
@@ -114,13 +125,16 @@ public class MainActivityApp extends AppCompatActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        localeDelegate.onCreate(this);
+
         final Context context = getApplicationContext();
         assert context != null;
 
-        // setContentView(R.layout.main);
-
         // Setup main view with navigation drawer
         setContentView(R.layout.activity_main);
+
+        // Set title to make sure, we have the localized version
+        setTitle(R.string.app_name);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -134,25 +148,25 @@ public class MainActivityApp extends AppCompatActivity
         // Listener to detect when the navigation drawer is opening, so we
         // avoid the main view to handle the swipe of the navigation drawer
         drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
-                 @Override
-                 public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
-                     navigationDrawerActive = true;
-                 }
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+                navigationDrawerActive = true;
+            }
 
-                 @Override
-                 public void onDrawerOpened(@NonNull View drawerView) {
-                     navigationDrawerActive = true;
-                 }
+            @Override
+            public void onDrawerOpened(@NonNull View drawerView) {
+                navigationDrawerActive = true;
+            }
 
-                 @Override
-                 public void onDrawerClosed(@NonNull View drawerView) {
-                     navigationDrawerActive = false;
-                 }
+            @Override
+            public void onDrawerClosed(@NonNull View drawerView) {
+                navigationDrawerActive = false;
+            }
 
-                 @Override
-                 public void onDrawerStateChanged(int newState) {
-                 }
-             });
+            @Override
+            public void onDrawerStateChanged(int newState) {
+            }
+        });
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -202,6 +216,7 @@ public class MainActivityApp extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        localeDelegate.onResumed(this);
 
         // Update calendar view
         calendarUpdate();
@@ -210,8 +225,7 @@ public class MainActivityApp extends AppCompatActivity
     /**
      * Called to save the current instance state
      *
-     * @param outState
-     * Bundle to place the saved state
+     * @param outState Bundle to place the saved state
      */
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -232,6 +246,14 @@ public class MainActivityApp extends AppCompatActivity
             dbMain.close();
     }
 
+    /**
+     * Called when the activity is paused
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        localeDelegate.onPaused();
+    }
 
     /**
      * Close draw when pressing "back"
@@ -347,12 +369,12 @@ public class MainActivityApp extends AppCompatActivity
         } else {
             calendarCells = calButtonIds_2;
         }
-        
+
         PreferenceUtils preferences = new PreferenceUtils(context);
 
         // Set weekday labels depending on selected start of week
         int startofweek = preferences.getInt("startofweek", 0);
-        if(startofweek == 0) {
+        if (startofweek == 0) {
             findViewById(R.id.rowcaldays0).setVisibility(View.VISIBLE);
             findViewById(R.id.rowcaldays0_2).setVisibility(View.VISIBLE);
             findViewById(R.id.rowcaldays1).setVisibility(View.GONE);
@@ -389,11 +411,11 @@ public class MainActivityApp extends AppCompatActivity
 
         // If the week should start on monday, adjust the first day of the month,
         // so every day moves one position to the left and sunday gets to the end
-        if(startofweek == 1) {
+        if (startofweek == 1) {
             firstDayOfWeek--;
-            if(firstDayOfWeek == 0) firstDayOfWeek = 7;
+            if (firstDayOfWeek == 0) firstDayOfWeek = 7;
         }
-        
+
         GregorianCalendar calToday = new GregorianCalendar();
         int dayToday = calToday.get(GregorianCalendar.DATE);
         int monthToday = calToday.get(GregorianCalendar.MONTH) + 1;
@@ -418,14 +440,14 @@ public class MainActivityApp extends AppCompatActivity
                 if (day == dayToday && monthCurrent == monthToday && yearCurrent == yearToday) {
                     current = true;
                 }
-                
+
                 // Set other button attributes
                 cell.setYear(yearCurrent);
                 cell.setMonth(monthCurrent);
                 cell.setDay(day);
                 cell.setCurrent(current);
 
-                if(entry != null) {
+                if (entry != null) {
                     cell.setType(entry.type);
                     cell.setDayofcycle(show_cycle ? entry.dayofcycle : 0);
                     cell.setIntensity(entry.intensity);
@@ -522,7 +544,7 @@ public class MainActivityApp extends AppCompatActivity
         final Activity activity = this;
 
         // Check if we have the permission to access storage
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             builder.setMessage(getResources().getString(R.string.permissions_needed));
 
@@ -533,7 +555,7 @@ public class MainActivityApp extends AppCompatActivity
                             ActivityCompat.requestPermissions(activity,
                                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                                     requestCode
-                                    );
+                            );
                         }
                     });
 
@@ -549,7 +571,7 @@ public class MainActivityApp extends AppCompatActivity
      * Handle permission request
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode,  @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         final Context context = getApplicationContext();
         assert context != null;
 
@@ -584,7 +606,7 @@ public class MainActivityApp extends AppCompatActivity
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(checkBackupStoragePermissions(PERMISSION_CONFIRM_BACKUP)) {
+                        if (checkBackupStoragePermissions(PERMISSION_CONFIRM_BACKUP)) {
                             runBackup(context);
                         }
                     }
@@ -638,7 +660,7 @@ public class MainActivityApp extends AppCompatActivity
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(checkBackupStoragePermissions(PERMISSION_CONFIRM_RESTORE)) {
+                        if (checkBackupStoragePermissions(PERMISSION_CONFIRM_RESTORE)) {
                             runRestore(context);
                         }
                     }
@@ -703,7 +725,7 @@ public class MainActivityApp extends AppCompatActivity
         // If "direct details" is set by the user, just open the details
         PreferenceUtils preferences = new PreferenceUtils(context);
 
-        if(preferences.getBoolean("direct_details", false)) {
+        if (preferences.getBoolean("direct_details", false)) {
             showDetailsActivity(yearCurrent, monthCurrent, day);
         } else {
             // Set or remove entry with confirmation
@@ -711,7 +733,7 @@ public class MainActivityApp extends AppCompatActivity
             builder.setTitle(getResources()
                     .getString(R.string.calendaraction_title));
 
-            final GregorianCalendar date = new GregorianCalendar(yearCurrent, monthCurrent -1 , day);
+            final GregorianCalendar date = new GregorianCalendar(yearCurrent, monthCurrent - 1, day);
             int type = dbMain.getEntryType(date);
             if (type != PERIOD_START && type != PERIOD_CONFIRMED) {
                 builder.setMessage(getResources().getString(
@@ -746,7 +768,8 @@ public class MainActivityApp extends AppCompatActivity
                             }
                         });
             } else {
-                if(type == PERIOD_START) builder.setMessage(getResources().getString(R.string.calendaraction_removeperiod));
+                if (type == PERIOD_START)
+                    builder.setMessage(getResources().getString(R.string.calendaraction_removeperiod));
                 else builder.setMessage(getResources().getString(R.string.calendaraction_remove));
                 builder.setPositiveButton(
                         getResources().getString(R.string.calendaraction_ok),
@@ -820,10 +843,10 @@ public class MainActivityApp extends AppCompatActivity
                         yearCurrent = Integer.parseInt(extras.getString("year"));
                         calendarUpdate();
                     }
-    
+
                 }
                 break;
-            
+
             // Options modified
             case SET_OPTIONS:
                 handleDatabaseEdit();
@@ -848,7 +871,7 @@ public class MainActivityApp extends AppCompatActivity
 
         // Only dispatch touch event to gesture detector,
         // if the navigation drawer is not active (opening, closing etc.)
-        if(!navigationDrawerActive) {
+        if (!navigationDrawerActive) {
             return gestureDetector.onTouchEvent(e);
         }
 
@@ -885,5 +908,12 @@ public class MainActivityApp extends AppCompatActivity
             return false;
         }
     }
-}
 
+    /**
+     * Override to set custom locale
+     */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(localeDelegate.attachBaseContext(newBase));
+    }
+}

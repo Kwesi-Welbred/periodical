@@ -19,6 +19,7 @@
 package de.arnowelzel.android.periodical;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,10 +29,14 @@ import android.view.MenuItem;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.zeugmasolutions.localehelper.LocaleHelperActivityDelegateImpl;
+
 /**
  * Activity to handle the "About" command
  */
 public class AboutActivity extends AppCompatActivity {
+    /* Delegate for language override */
+    LocaleHelperActivityDelegateImpl localeDelegate = new LocaleHelperActivityDelegateImpl();
 
     /**
      * Called when the activity starts
@@ -40,9 +45,13 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        localeDelegate.onCreate(this);
 
         // Set up view
         setContentView(R.layout.webview);
+
+        // Set title to make sure, we have the localized version
+        setTitle(R.string.about_title);
 
         // Activate "back button" in Action Bar
         ActionBar actionBar = getSupportActionBar();
@@ -86,4 +95,31 @@ public class AboutActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    /**
+     * Override to set custom locale
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        localeDelegate.onResumed(this);
+    }
+
+    /**
+     * Override to set custom locale
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        localeDelegate.onPaused();
+    }
+
+    /**
+     * Override to set custom locale
+     */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(localeDelegate.attachBaseContext(newBase));
+    }
+
 }
